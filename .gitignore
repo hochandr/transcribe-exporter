@@ -1,0 +1,12 @@
+.idea/
+venv/
+.env
+*.png
+
+### JupyterNotebooks ###
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# IPython
+profile_default/
+ipython_config.py
