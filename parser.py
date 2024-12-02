@@ -23,6 +23,7 @@ def parse_loops(section):
         duration_dt = datetime.strptime(loop[9], datetime_format)
         duration_td = timedelta(hours=duration_dt.hour, minutes=duration_dt.minute, seconds=duration_dt.second,
                                 microseconds=duration_dt.microsecond)
+
         if duration_td.total_seconds() == 0:
             continue
         yield XscLoop(loop[5], datetime.strptime(loop[8], datetime_format), loop[6], duration_td)

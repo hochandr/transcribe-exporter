@@ -7,6 +7,68 @@
 
 <h1>{{ xsc.sound_file.name }}</h1>
 
+<div id="waveform"></div>
+
+<ul id="textblocks">
+    {% for text_block in xsc.text_blocks %}
+        <li>
+            <button class="timestamp"
+                    value="{{ text_block.timestamp|totalSeconds }}">{{ text_block.timestamp|formatTimestamp }}</button>
+            <span>{{ text_block.value }}</span>
+        </li>
+    {% endfor %}
+</ul>
+
+<script type="module">
+    import WaveSurfer from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.esm.js'
+    import TimelinePlugin from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/plugins/timeline.esm.js'
+    import RegionsPlugin from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/plugins/regions.esm.js'
+
+    const regions = RegionsPlugin.create()
+
+    const ws = WaveSurfer.create({
+        container: '#waveform',
+        waveColor: '#000',
+        progressColor: '#000',
+        normalize: true,
+        dragToSeek: true,
+        plugins: [TimelinePlugin.create(), regions],
+    })
+
+    const base64Response = await fetch('data:audio/mpeg;base64,{{ base64 }}');
+    const blob = await base64Response.blob();
+    ws.loadBlob(blob);
+
+    ws.on('decode', () => {
+        {% for region in regions %}
+            regions.addRegion({
+                start: {{ region.start }},
+                end: {{ region.end }},
+                content: '{{ region.content }}',
+                color: '{{ region.color }}',
+                drag: false,
+                resize: false,
+            })
+        {% endfor %}
+    })
+
+    ws.once('decode', () => {
+        document.querySelectorAll('button.timestamp').forEach((button) => {
+            button.onclick = (e) => {
+                ws.setTime(e.target.value)
+                ws.play()
+            }
+        })
+    })
+
+    ws.on('interaction', () => {
+        ws.playPause()
+    })
+
+    ws.on('finish', () => {
+        ws.setTime(0)
+    })
+</script>
 
 </body>
 </html>

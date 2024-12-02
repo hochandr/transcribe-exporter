@@ -35,6 +35,8 @@ def main(transcribe_file_path: str, standalone: bool):
     with open(f"{xsc.sound_file.name}.html", 'wb') as fd:
         fd.write(html.encode(encoding='utf-8'))
 
+    logger.info(f"Successfully exported '{xsc.sound_file.name}'")
+
 
 if __name__ == '__main__':
     logger.basicConfig(
