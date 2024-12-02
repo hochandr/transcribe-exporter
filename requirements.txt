@@ -1,0 +1,13 @@
+requests
+urllib3
+httplib2
+httpx
+python-dateutil
+aiohttp
+linque
+requests-html
+google-cloud-monitoring
+dict2xml
+furl
+google-cloud-datastore
+Jinja2
