@@ -4,6 +4,7 @@ import random
 from linque import Linque
 from models import XscFile, XscMarker, XscMarkerType
 from jinja2 import Environment, select_autoescape, FileSystemLoader
+import re
 
 
 def export_to_html(xsc: XscFile):
@@ -21,9 +22,13 @@ def export_to_html(xsc: XscFile):
     )
     env.filters['totalSeconds'] = get_total_seconds
     env.filters['formatTimestamp'] = format_timestamp
+    env.filters['formatTextBlock'] = format_text_block
     template = env.get_template('export.html.jinja')
 
-    return template.render(xsc=xsc, base64=base64_output, regions=regions)
+    regex = re.compile('[^a-zA-Z]')
+    css_id = regex.sub('', xsc.sound_file.name).lower()
+
+    return template.render(xsc=xsc, base64=base64_output, regions=regions, id=css_id)
 
 
 def get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> object:
@@ -62,3 +67,7 @@ def get_total_seconds(d: datetime):
 
 def format_timestamp(d: datetime):
     return d.strftime('%M:%S')
+
+
+def format_text_block(t: str):
+    return t.replace('\\n', '<br>').replace('\\C', ' ')
