@@ -7,31 +7,49 @@ from jinja2 import Environment, select_autoescape, FileSystemLoader
 import re
 
 
-def export_to_html(xsc: XscFile):
-    with open(xsc.sound_file.path, 'rb') as binary_file:
-        binary_file_data = binary_file.read()
-    base64_encoded_data = base64.b64encode(binary_file_data)
-    base64_output = base64_encoded_data.decode('utf-8')
+def export_to_html(xsc_files: list[XscFile], output_file_path: str):
+    songs = []
 
-    section_markers = Linque(xsc.markers).where(lambda m: m.type == XscMarkerType.Section).to_list()
-    regions = get_regions(section_markers, xsc.sound_file.duration)
+    for xsc in xsc_files:
+        with open(xsc.sound_file.path, 'rb') as binary_file:
+            binary_file_data = binary_file.read()
+        base64_encoded_data = base64.b64encode(binary_file_data)
+        base64_output = base64_encoded_data.decode('utf-8')
+
+        section_markers = Linque(xsc.markers).where(lambda m: m.type == XscMarkerType.Section).to_list()
+        regions = _get_regions(section_markers, xsc.sound_file.duration)
+
+        regex = re.compile('[^a-zA-Z]')
+        css_id = regex.sub('', xsc.sound_file.name).lower()
+
+        text_blocks = Linque(xsc.text_blocks).select(lambda t: {
+            "content": _format_text_block(t.value),
+            "timestamp": _format_timestamp(t.timestamp),
+            "timestamp_seconds": _get_total_seconds(t.timestamp),
+            "color": t.color,
+        }).to_list()
+
+        songs.append({
+            "id": css_id,
+            "name": xsc.sound_file.name,
+            "base64": base64_output,
+            "regions": regions,
+            "textblocks": text_blocks
+        })
 
     env = Environment(
         loader=FileSystemLoader('templates'),
         autoescape=select_autoescape()
     )
-    env.filters['totalSeconds'] = get_total_seconds
-    env.filters['formatTimestamp'] = format_timestamp
-    env.filters['formatTextBlock'] = format_text_block
     template = env.get_template('export.html.jinja')
 
-    regex = re.compile('[^a-zA-Z]')
-    css_id = regex.sub('', xsc.sound_file.name).lower()
+    html = template.render(songs=songs)
 
-    return template.render(xsc=xsc, base64=base64_output, regions=regions, id=css_id)
+    with open(output_file_path, 'wb') as fd:
+        fd.write(html.encode(encoding='utf-8'))
 
 
-def get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> object:
+def _get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> object:
     regions = []
     colors = {}
 
@@ -43,10 +61,10 @@ def get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> obj
 
         key = m.value.split()[0]
         if key not in colors:
-            colors[key] = get_random_color()
+            colors[key] = _get_random_color()
 
-        regions.append({"start": get_total_seconds(m.timestamp),
-                        "end": get_total_seconds(markers[i + 1].timestamp) if i + 1 < len(
+        regions.append({"start": _get_total_seconds(m.timestamp),
+                        "end": _get_total_seconds(markers[i + 1].timestamp) if i + 1 < len(
                             markers) else sound_file_duration.total_seconds(),
                         "content": m.value,
                         "color": colors[key]})
@@ -54,20 +72,20 @@ def get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> obj
     return regions
 
 
-def get_random_color():
+def _get_random_color():
     r = random.randint(0, 255)
     g = random.randint(0, 255)
     b = random.randint(0, 255)
     return f"rgba({r}, {g}, {b}, 0.5)"
 
 
-def get_total_seconds(d: datetime):
+def _get_total_seconds(d: datetime):
     return (d - datetime(1900, 1, 1)).total_seconds()
 
 
-def format_timestamp(d: datetime):
+def _format_timestamp(d: datetime):
     return d.strftime('%M:%S')
 
 
-def format_text_block(t: str):
-    return t.replace('\\n', '<br>').replace('\\C', ' ')
+def _format_text_block(t: str):
+    return t.replace('\\n', '<br>').replace('\\C', ',')

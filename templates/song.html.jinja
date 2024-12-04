@@ -1,0 +1,105 @@
+<div class="song my-5" id="{{ song.id }}">
+
+    <h2 class="mb-4">{{ song.name }}</h2>
+
+    <div class="float-end mb-2 zoom">
+        <input type="range" class="form-range" min="0" max="100" value="0">
+    </div>
+
+    <div class="text-center loading">
+        <div class="spinner-grow" role="status"></div>
+    </div>
+
+    <div class="waveform mb-5 mt-3"></div>
+
+    <p class="text-center">
+        <button class="btn btn-outline-dark" type="button" data-bs-toggle="collapse"
+                data-bs-target="#{{ song.id }} .collapse"
+                aria-expanded="false" aria-controls="collapse">
+            Notes
+        </button>
+    </p>
+    <div class="collapse">
+        <div class="card card-body">
+            <ul class="textblocks list-unstyled mb-0">
+                {% for t in song.textblocks %}
+                    <li class="textblock font-monospace">
+                        <button class="btn btn-link timestamp"
+                                value="{{ t.timestamp_seconds }}">
+                            {{ t.timestamp }}
+                        </button>
+                        {% if t.color == 'White' %}
+                            <i class="bi bi-justify-left"></i>
+                        {% endif %}
+                        <span>{{ t.content }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <script type="module">
+        const regions = WaveSurfer.Regions.create()
+        const hover = WaveSurfer.Hover.create({
+            lineColor: 'rgba(0,0,0,0.5)',
+            labelBackground: 'rgba(0,0,0,0.5)',
+            labelColor: '#fff',
+            labelSize: '11px',
+        });
+
+        const ws = WaveSurfer.create({
+            container: '#{{ song.id }} .waveform',
+            waveColor: '#d7d7d7',
+            progressColor: '#c8c8c8',
+            cursorColor: '#ff0015',
+            cursorWidth: 2,
+            height: 100,
+            normalize: true,
+            dragToSeek: true,
+            plugins: [WaveSurfer.Timeline.create(), regions, hover],
+        })
+
+        const base64Response = await fetch('data:audio/mpeg;base64,{{ song.base64 }}');
+        const blob = await base64Response.blob();
+        ws.loadBlob(blob);
+
+        ws.once('decode', () => {
+            {% for region in song.regions %}
+                regions.addRegion({
+                    start: {{ region.start }},
+                    end: {{ region.end }},
+                    content: '{{ region.content }}',
+                    color: '{{ region.color }}',
+                    drag: false,
+                    resize: false,
+                })
+            {% endfor %}
+
+            document.querySelector('#{{ song.id }} .zoom input').addEventListener('input',
+                (e) => {
+                    const minPxPerSec = e.target.valueAsNumber
+                    ws.zoom(minPxPerSec)
+                })
+
+            document.querySelectorAll('#{{ song.id }} button.timestamp').forEach((button) => {
+                button.onclick = (e) => {
+                    ws.setTime(e.target.value)
+                    ws.play()
+                }
+            })
+        })
+
+        ws.on('redrawcomplete', () => {
+            document.querySelector('#{{ song.id }} .loading').style.display = 'none';
+            document.querySelector('#{{ song.id }} .zoom').style.display = 'block';
+        })
+
+        ws.on('interaction', () => {
+            ws.playPause()
+        })
+
+        ws.on('finish', () => {
+            ws.setTime(0)
+        })
+    </script>
+</div>

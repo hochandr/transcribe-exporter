@@ -1,24 +1,51 @@
 from datetime import datetime, timedelta
-
+import csv
+import itertools
 from linque import Linque
 from pathlib import Path, PureWindowsPath
+import logging as logger
 
-from models import XscMarker, XscTextBlock, XscLoop, XscMarkerType, XscSoundFile
+from models import XscMarker, XscTextBlock, XscLoop, XscMarkerType, XscSoundFile, XscFile
 
 datetime_format = '%H:%M:%S.%f'
 
 
-def parse_markers(section):
+def parse_transcribe_file(file_path: str) -> XscFile:
+    with open(file_path, mode='r', ) as file:
+        xsc_file = csv.reader(file)
+        content = Linque(xsc_file).to_list()
+    sections = [list(y) for x, y in itertools.groupby(content, lambda z: len(z) == 0) if not x]
+
+    xsc = XscFile()
+
+    for section in sections:
+        section_type = section[0][0] if len(section[0]) < 2 else section[0][1]
+        match section_type:
+            case 'Main':
+                xsc.sound_file = _parse_main(section)
+            case 'Markers':
+                xsc.markers = _parse_markers(section)
+            case 'Loops':
+                xsc.loops = _parse_loops(section)
+            case 'TextBlocks':
+                xsc.text_blocks = _parse_text_blocks(section)
+            case _:
+                logger.debug(f"Skipping '{section_type}' section")
+
+    return xsc
+
+
+def _parse_markers(section):
     for marker in section[2:len(section) - 1]:
         yield XscMarker(marker[3], datetime.strptime(marker[5], datetime_format), XscMarkerType(marker[0]))
 
 
-def parse_text_blocks(section):
+def _parse_text_blocks(section):
     for text_block in section[3:len(section) - 1]:
         yield XscTextBlock(text_block[6], datetime.strptime(text_block[5], datetime_format), text_block[4])
 
 
-def parse_loops(section):
+def _parse_loops(section):
     for loop in section[2:len(section) - 1]:
         duration_dt = datetime.strptime(loop[9], datetime_format)
         duration_td = timedelta(hours=duration_dt.hour, minutes=duration_dt.minute, seconds=duration_dt.second,
@@ -29,7 +56,7 @@ def parse_loops(section):
         yield XscLoop(loop[5], datetime.strptime(loop[8], datetime_format), loop[6], duration_td)
 
 
-def parse_main(section):
+def _parse_main(section):
     duration_secs = Linque(section).where(lambda l: l[0] == 'SoundFileInfo').select(
         lambda l: float(l[len(l) - 1])).single()
     path = Linque(section).where(lambda l: l[0] == 'SoundFileName').select(
