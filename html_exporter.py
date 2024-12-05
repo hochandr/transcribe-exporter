@@ -22,19 +22,23 @@ def export_to_html(xsc_files: list[XscFile], output_file_path: str):
         regex = re.compile('[^a-zA-Z]')
         css_id = regex.sub('', xsc.sound_file.name).lower()
 
-        text_blocks = Linque(xsc.text_blocks).select(lambda t: {
+        text_blocks = Linque(xsc.text_blocks).where(lambda t: 'Creation date:' not in t.value).select(lambda t: {
             "content": _format_text_block(t.value),
             "timestamp": _format_timestamp(t.timestamp),
             "timestamp_seconds": _get_total_seconds(t.timestamp),
             "color": t.color,
         }).to_list()
 
+        meta_text_block = Linque(xsc.text_blocks).single(lambda t: 'Creation date:' in t.value)
+        metadata = meta_text_block.value.replace('\\C', ',').split('\\n')
+
         songs.append({
             "id": css_id,
             "name": xsc.sound_file.name,
             "base64": base64_output,
             "regions": regions,
-            "textblocks": text_blocks
+            "textblocks": text_blocks,
+            "metadata": metadata
         })
 
     env = Environment(

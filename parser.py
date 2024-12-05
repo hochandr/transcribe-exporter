@@ -41,8 +41,11 @@ def _parse_markers(section):
 
 
 def _parse_text_blocks(section):
+    text_blocks = []
     for text_block in section[3:len(section) - 1]:
-        yield XscTextBlock(text_block[6], datetime.strptime(text_block[5], datetime_format), text_block[4])
+        text_blocks.append(
+            XscTextBlock(text_block[6], datetime.strptime(text_block[5], datetime_format), text_block[4]))
+    return text_blocks
 
 
 def _parse_loops(section):
