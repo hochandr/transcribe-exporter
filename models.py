@@ -4,21 +4,21 @@ from enum import Enum
 from dataclasses import dataclass, field
 
 XscColors = {
-    # "White": (255, 255, 255),
-    "Grey": (192, 192, 192),
-    # "Black": (0, 0, 0),
-    "Red": (255, 128, 128),
-    "DarkRed": (128, 0, 0),
-    "Green": (128, 255, 128),
     "DarkGreen": (0, 128, 0),
-    "Blue": (128, 128, 255),
+    "DarkRed": (128, 0, 0),
+    "Fuchsia": (255, 0, 255),
     "DarkBlue": (0, 0, 128),
-    "Teal": (0, 128, 128),
-    "Olive": (128, 128, 0),
     "Purple": (128, 0, 128),
     "Cyan": (0, 255, 255),
     "Yellow": (255, 255, 0),
-    "Fuchsia": (255, 0, 255),
+    "Teal": (0, 128, 128),
+    "Olive": (128, 128, 0),
+    "Red": (255, 128, 128),
+    "Green": (128, 255, 128),
+    "Blue": (128, 128, 255),
+    # "Black": (0, 0, 0),
+    # "White": (255, 255, 255),
+    "Grey": (192, 192, 192),
 }
 
 

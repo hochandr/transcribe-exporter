@@ -1,5 +1,5 @@
+import colorsys
 import base64
-import itertools
 from datetime import datetime, timedelta
 from linque import Linque
 from models import XscFile, XscMarker, XscMarkerType, XscColors
@@ -56,8 +56,11 @@ def export_to_html(xsc_files: list[XscFile], output_file_path: str):
 def _get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> object:
     regions = []
     colors = {}
-    color_palette = itertools.cycle(XscColors.values())
+    color_count = 10
+    hsv_palette = [(x * 1.0 / color_count, 0.5, 0.5) for x in range(color_count)]
+    rgb_palette = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_palette))
 
+    color_i = 0
     for i in range(len(markers)):
         m = markers[i]
 
@@ -66,8 +69,11 @@ def _get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> ob
 
         key = m.value.split()[0]
         if key not in colors:
-            color = next(color_palette)
-            colors[key] = f"rgba({color[0]}, {color[1]}, {color[2]}, 0.66)"
+            if color_i >= len(rgb_palette):
+                color_i -= len(rgb_palette) - 1
+            color = rgb_palette[color_i]
+            color_i += 2
+            colors[key] = f"rgba({color[0] * 255}, {color[1] * 255}, {color[2] * 255}, 0.75)"
 
         regions.append({"start": _get_total_seconds(m.timestamp),
                         "end": _get_total_seconds(markers[i + 1].timestamp) if i + 1 < len(
