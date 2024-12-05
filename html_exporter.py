@@ -1,8 +1,8 @@
 import base64
+import itertools
 from datetime import datetime, timedelta
-import random
 from linque import Linque
-from models import XscFile, XscMarker, XscMarkerType
+from models import XscFile, XscMarker, XscMarkerType, XscColors
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 import re
 
@@ -52,6 +52,7 @@ def export_to_html(xsc_files: list[XscFile], output_file_path: str):
 def _get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> object:
     regions = []
     colors = {}
+    color_palette = itertools.cycle(XscColors.values())
 
     for i in range(len(markers)):
         m = markers[i]
@@ -61,7 +62,8 @@ def _get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> ob
 
         key = m.value.split()[0]
         if key not in colors:
-            colors[key] = _get_random_color()
+            color = next(color_palette)
+            colors[key] = f"rgba({color[0]}, {color[1]}, {color[2]}, 0.66)"
 
         regions.append({"start": _get_total_seconds(m.timestamp),
                         "end": _get_total_seconds(markers[i + 1].timestamp) if i + 1 < len(
@@ -70,13 +72,6 @@ def _get_regions(markers: list[XscMarker], sound_file_duration: timedelta) -> ob
                         "color": colors[key]})
 
     return regions
-
-
-def _get_random_color():
-    r = random.randint(0, 255)
-    g = random.randint(0, 255)
-    b = random.randint(0, 255)
-    return f"rgba({r}, {g}, {b}, 0.5)"
 
 
 def _get_total_seconds(d: datetime):
