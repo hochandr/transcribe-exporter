@@ -3,7 +3,7 @@ import base64
 from datetime import datetime, timedelta
 from linque import Linque
 from models import XscFile, XscMarker, XscMarkerType, XscColors
-from jinja2 import Environment, select_autoescape, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader
 import re
 
 
@@ -43,9 +43,9 @@ def export_to_html(xsc_files: list[XscFile], output_file_path: str):
 
     env = Environment(
         loader=FileSystemLoader('templates'),
-        autoescape=select_autoescape()
+        autoescape=False
     )
-    template = env.get_template('export.html.jinja')
+    template = env.get_template('main.html')
 
     html = template.render(songs=songs)
 
