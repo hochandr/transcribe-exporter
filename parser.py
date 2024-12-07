@@ -11,7 +11,7 @@ datetime_format = '%H:%M:%S.%f'
 
 
 def parse_transcribe_file(file_path: str) -> XscFile:
-    with open(file_path, mode='r', ) as file:
+    with open(file_path, mode='r', encoding='utf-8') as file:
         xsc_file = csv.reader(file)
         content = Linque(xsc_file).to_list()
     sections = [list(y) for x, y in itertools.groupby(content, lambda z: len(z) == 0) if not x]
