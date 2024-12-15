@@ -53,6 +53,34 @@
     .textblock i + span {
       background-color: #f5f5f5;
     }
+
+    @media print {
+      .bg-dark {
+        color: black;
+        background-color: white !important;
+        border: 1px solid black;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      .waveform ::part(canvases) {
+        opacity: 0;
+      }
+
+      .waveform ::part(cursor) {
+        display: none;
+      }
+
+      .waveform ::part(timeline-wrapper) {
+        display: none;
+      }
+
+      .waveform ::part(wrapper) {
+        height: 5rem;
+      }
+    }
   </style>
 
   <body>
