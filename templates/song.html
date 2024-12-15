@@ -1,50 +1,62 @@
 <div class="song my-5" id="{{ song.id }}">
+  <h2 class="mb-4">{{ song.name }}</h2>
 
-    <h2 class="mb-4">{{ song.name }}</h2>
+  <div>
+    {% for m in song.metadata %}
+    <span class="badge bg-dark">{{ m }}</span>
+    {% endfor %}
+  </div>
 
-    <div>
-        {% for m in song.metadata %}
-            <span class="badge bg-dark">{{ m }}</span>
+  <div class="float-end mb-2 zoom">
+    <input type="range" class="form-range" min="0" max="100" value="0" />
+  </div>
+
+  <div class="text-center my-5 loading">
+    <div class="spinner-grow" role="status"></div>
+  </div>
+
+  <div class="waveform mb-5 mt-3"></div>
+
+  <p class="text-center">
+    <button
+      class="btn btn-outline-dark"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#{{ song.id }} .collapse"
+      aria-expanded="false"
+      aria-controls="collapse"
+    >
+      Notes
+    </button>
+  </p>
+  <div class="collapse">
+    <div class="card card-body">
+      <ul class="textblocks list-unstyled mb-0">
+        {% for t in song.textblocks %}
+        <li class="textblock font-monospace">
+          <button
+            class="btn btn-link timestamp"
+            value="{{ t.timestamp_seconds }}"
+          >
+            {{ t.timestamp }}
+          </button>
+          {% if t.color == 'White' %}
+          <i class="bi bi-justify-left"></i>
+          {% endif %}
+          <span>{{ t.content }}</span>
+        </li>
         {% endfor %}
+      </ul>
     </div>
+  </div>
 
-    <div class="float-end mb-2 zoom">
-        <input type="range" class="form-range" min="0" max="100" value="0">
-    </div>
+  <script type="module">
+    import WebAudioPlayer from "https://unpkg.com/wavesurfer.js@7/dist/webaudio.js";
 
-    <div class="text-center my-5 loading">
-        <div class="spinner-grow" role="status"></div>
-    </div>
+    const webAudioPlayer = new WebAudioPlayer();
+    webAudioPlayer.src = "data:audio/mpeg;base64,{{ song.base64 }}";
+    webAudioPlayer.addEventListener("loadedmetadata", () => {
 
-    <div class="waveform mb-5 mt-3"></div>
-
-    <p class="text-center">
-        <button class="btn btn-outline-dark" type="button" data-bs-toggle="collapse"
-                data-bs-target="#{{ song.id }} .collapse"
-                aria-expanded="false" aria-controls="collapse">
-            Notes
-        </button>
-    </p>
-    <div class="collapse">
-        <div class="card card-body">
-            <ul class="textblocks list-unstyled mb-0">
-                {% for t in song.textblocks %}
-                    <li class="textblock font-monospace">
-                        <button class="btn btn-link timestamp"
-                                value="{{ t.timestamp_seconds }}">
-                            {{ t.timestamp }}
-                        </button>
-                        {% if t.color == 'White' %}
-                            <i class="bi bi-justify-left"></i>
-                        {% endif %}
-                        <span>{{ t.content }}</span>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-
-    <script type="module">
         const regions = WaveSurfer.Regions.create()
         const hover = WaveSurfer.Hover.create({
             lineColor: 'rgba(0,0,0,0.5)',
@@ -54,7 +66,10 @@
         });
 
         const ws = WaveSurfer.create({
-            container: '#{{ song.id }} .waveform',
+            container: "#{{ song.id }} .waveform",
+            media: webAudioPlayer,
+            peaks: webAudioPlayer.getChannelData(),
+            duration: webAudioPlayer.duration,
             waveColor: '#c8c8c8',
             progressColor: '#c8c8c8',
             cursorColor: '#ff0015',
@@ -63,11 +78,7 @@
             normalize: true,
             dragToSeek: true,
             plugins: [WaveSurfer.Timeline.create(), regions, hover],
-        })
-
-        const base64Response = await fetch('data:audio/mpeg;base64,{{ song.base64 }}');
-        const blob = await base64Response.blob();
-        ws.loadBlob(blob);
+        });
 
         ws.once('decode', () => {
             {% for region in song.regions %}
@@ -107,5 +118,6 @@
         ws.on('finish', () => {
             ws.setTime(0)
         })
-    </script>
+    });
+  </script>
 </div>
