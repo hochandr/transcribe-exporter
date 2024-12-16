@@ -37,12 +37,14 @@ def parse_transcribe_file(file_path: str) -> XscFile:
 
 def _parse_markers(section):
     for marker in section[2:len(section) - 1]:
+        marker = _unescape(marker);
         yield XscMarker(marker[3], datetime.strptime(marker[5], datetime_format), XscMarkerType(marker[0]))
 
 
 def _parse_text_blocks(section):
     text_blocks = []
     for text_block in section[3:len(section) - 1]:
+        text_block = _unescape(text_block);
         text_blocks.append(
             XscTextBlock(text_block[6], datetime.strptime(text_block[5], datetime_format), text_block[4]))
     return text_blocks
@@ -50,6 +52,7 @@ def _parse_text_blocks(section):
 
 def _parse_loops(section):
     for loop in section[2:len(section) - 1]:
+        loop = _unescape(loop)
         duration_dt = datetime.strptime(loop[9], datetime_format)
         duration_td = timedelta(hours=duration_dt.hour, minutes=duration_dt.minute, seconds=duration_dt.second,
                                 microseconds=duration_dt.microsecond)
@@ -69,3 +72,6 @@ def _parse_main(section):
     name = PureWindowsPath(path) if platform == 'Win' else Path(path)
 
     return XscSoundFile(name.stem, timedelta(seconds=duration_secs), path)
+
+def _unescape(x: list[str]):
+    return Linque(x).select(lambda l: l.replace('\\C', ',')).to_list();

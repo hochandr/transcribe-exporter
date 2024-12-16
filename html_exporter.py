@@ -30,7 +30,7 @@ def export_to_html(xsc_files: list[XscFile], filter_textblocks: str, output_file
         }).to_list()
 
         meta_text_block = Linque(xsc.text_blocks).single(lambda t: 'Creation date:' in t.value)
-        metadata = meta_text_block.value.replace('\\C', ',').split('\\n')
+        metadata = meta_text_block.value.split('\\n')
 
         songs.append({
             "id": css_id,
@@ -93,4 +93,4 @@ def _format_timestamp(d: datetime):
 
 
 def _format_text_block(t: str):
-    return t.replace('\\n', '<br>').replace('\\C', ',')
+    return t.replace('\\n', '<br>')

@@ -7,7 +7,7 @@
     {% endfor %}
   </div>
 
-  <div class="float-end mb-2 zoom d-print-none">
+  <div class="float-end mb-2 zoom d-print-none d-none">
     <input type="range" class="form-range" min="0" max="100" value="0" />
   </div>
 
@@ -17,6 +17,7 @@
 
   <div class="waveform mb-5 mt-3"></div>
 
+  {% if song.textblocks %}
   <p class="text-center d-print-none">
     <button
       class="btn btn-outline-dark"
@@ -49,11 +50,14 @@
       </ul>
     </div>
   </div>
+  {% endif %}
 
   <script type="module">
     // Import as module, because webaudio.js has import statements
     import WebAudioPlayer from "https://unpkg.com/wavesurfer.js@7/dist/webaudio.js";
 
+    // https://github.com/katspaugh/wavesurfer.js?tab=readme-ov-file#faq
+    // https://wavesurfer.xyz/examples/?webaudio-shim.js
     const webAudioPlayer = new WebAudioPlayer();
     webAudioPlayer.src = "data:audio/mpeg;base64,{{ song.base64 }}";
     webAudioPlayer.addEventListener("loadedmetadata", () => {
