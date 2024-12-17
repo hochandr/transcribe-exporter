@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 import re
 
 
-def export_to_html(xsc_files: list[XscFile], filter_textblocks: str, output_file_path: str):
+def export_to_html(xsc_files: list[XscFile], filter_textblocks: list[str], output_file_path: str):
     songs = []
 
     for xsc in xsc_files:
@@ -22,7 +22,12 @@ def export_to_html(xsc_files: list[XscFile], filter_textblocks: str, output_file
         regex = re.compile('[^a-zA-Z]')
         css_id = regex.sub('', xsc.sound_file.name).lower()
 
-        text_blocks = Linque(xsc.text_blocks).where(lambda t: 'Creation date:' not in t.value).where(lambda t: any(ft in t.value for ft in filter_textblocks)).select(lambda t: {
+        text_blocks = Linque(xsc.text_blocks).where(lambda t: 'Creation date:' not in t.value)
+        
+        if filter_textblocks != None and len(filter_textblocks) > 0:
+            text_blocks = text_blocks.where(lambda t: any(ft in t.value for ft in filter_textblocks))
+        
+        text_blocks = text_blocks.select(lambda t: {
             "content": _format_text_block(t.value),
             "timestamp": _format_timestamp(t.timestamp),
             "timestamp_seconds": _get_total_seconds(t.timestamp),

@@ -4,7 +4,7 @@ from html_exporter import export_to_html
 from parser import parse_transcribe_file
 
 
-def main(transcribe_file_paths: str, filter_textblocks: str):
+def main(transcribe_file_paths: list[str], filter_textblocks: list[str]):
     xsc_files = []
 
     for path in transcribe_file_paths:
@@ -28,6 +28,6 @@ if __name__ == '__main__':
         description='')
     parser.add_argument('--paths', '-p', help='Paths to Transcribe! files',
                         default=[])
-    parser.add_argument('--filter-textblocks', '-ft', help='Include filter for textblocks', default=[])
+    parser.add_argument('--filter-textblocks', '-ft', help='Include only textblocks, which contain at least one of these substrings', default=[])
     args = parser.parse_args()
     main(args.paths, args.filter_textblocks)
